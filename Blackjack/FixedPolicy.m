@@ -3,7 +3,8 @@ switch Type
     case 'Random'
         a = randi(2);
     case 'Risky'
-        if s < 20
+        [Sum, ~, ~] = StateFeature(s);
+        if Sum < 20
             a = ActionIndex('hit');
         else
             a = ActionIndex('stick');
