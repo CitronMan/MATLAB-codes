@@ -63,6 +63,7 @@ figure('Position', [300 200 500 300]);
 hold on;
 plot(mean((V_ordinary_list - G_true).^2), 'g');
 plot(mean((V_weighted_list - G_true).^2), 'r');
+ylim([0, 4]);
 xlabel('Episode');
 ylabel('Mean Square Error');
 legend('Ordinary', 'Weighted', 'Location', 'NorthEast');
