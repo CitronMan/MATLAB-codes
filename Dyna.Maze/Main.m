@@ -201,3 +201,62 @@ ylabel('Cumulative reward');
 title('Shortcut Maze');
 legend('Dyna-Q', 'Dyna-Q+');
 set(gca, 'FontSize', 15);
+
+display('Simulating Exercise 8.4...');
+if ~exist('ShortcutMaze2.mat', 'file')
+    Height = 6; Width = 9;
+    OldWall = [2, 3; 3, 3; 4, 3; 5, 3; 6, 3; 7, 3; 8, 3; 9, 3];
+    NewWall = [2, 3; 3, 3; 4, 3; 5, 3; 6, 3; 7, 3; 8, 3];
+    Start = [4; 1]; Goal = [9; 6]; FinalReward = 1;
+    TotalDuration = 6000; SwitchTime = 3000;
+    
+    PlanNum = 50; kappa = 0;
+    r = zeros(2, SimNum, TotalDuration);
+    for MethodID = 1:2
+        switch MethodID
+            case 1
+                display('Simulating Dyna-Q...');
+            case 2
+                display('Simulating Dyna-Q+...');
+        end
+        tStart = tic;
+        for SimID = 1:SimNum
+            Q = ActionValueSet;
+            switch MethodID
+                case 1
+                    ModelObj = DeterministicModel;
+                case 2
+                    ModelObj = ExploratoryModel(kappa);
+            end
+            MazeObj = Maze(Height, Width, OldWall, Start, Goal, FinalReward);
+            T = 0; SwitchFlag = false;
+            while T < TotalDuration
+                [~, a_history, ~, Q, ModelObj] = DynaQ(MazeObj, Q, ModelObj, 'PlanNum', PlanNum, 'SwitchTime', SwitchTime - T, 'NewWall', NewWall);
+                T = T + length(a_history);
+                if ~SwitchFlag && (T >= SwitchTime)
+                    MazeObj.Map = sparse(NewWall(:, 2), NewWall(:, 1), ones(size(NewWall, 1), 1), MazeObj.Height, MazeObj.Width);
+                    SwitchFlag = true;
+                end
+                if T <= TotalDuration
+                    r(MethodID, SimID, T) = 1;
+                end
+            end
+            if mod(SimID, 10) == 0
+                tElapse = toc(tStart);
+                display(sprintf('%d/%d processed, elapsed time: %.2fs', SimID, SimNum, tElapse));
+            end
+        end
+    end
+    save('ShortcutMaze2.mat', 'r');
+else
+    load('ShortcutMaze2.mat');
+    display('Previous result loaded.');
+end
+
+figure('Position', [300 200 500 400]);
+plot(cumsum(squeeze(mean(r, 2)), 2)');
+xlabel('Time steps');
+ylabel('Cumulative reward');
+title('Shortcut Maze');
+legend('Dyna-Q', 'Exploring action');
+set(gca, 'FontSize', 15);

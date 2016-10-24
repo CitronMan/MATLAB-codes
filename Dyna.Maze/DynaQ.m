@@ -3,11 +3,12 @@ gamma = 0.95;
 epsilon = 0.1;
 alpha = 0.7;
 nStep = 1;
+kappa = 0;
 PlanNum = 0;
 SwitchTime = Inf;
 NewWall = [];
 for i = 1:2:length(varargin)
-    if ismember(varargin{i}, {'gamma', 'epsilon', 'alpha', 'nStep', 'PlanNum', 'SwitchTime', 'NewWall'})
+    if ismember(varargin{i}, {'gamma', 'epsilon', 'alpha', 'nStep', 'kappa', 'PlanNum', 'SwitchTime', 'NewWall'})
         eval(sprintf('%s = varargin{i + 1};', varargin{i}));
     end
 end
@@ -24,6 +25,7 @@ while true
         s = s_history(t + 1);
         a = a_history(t + 1);
         [s_next, r] = MazeObj.OneStep(s, a);
+        ModelObj = ModelObj.UpdateModel(s, a, s_next, r);
         s_history = cat(2, s_history, s_next);
         r_history = cat(2, r_history, r);
         if s_next == 0
@@ -31,6 +33,10 @@ while true
         else
             a_list = MazeObj.ValidActionList(s_next);
             Q_list = Q.ReadActionValueList(s_next, a_list);
+            if isa(ModelObj, 'ExploratoryModel')
+                tau_list = ModelObj.ReadTimeGap(s_next, a_list);
+                Q_list = Q_list + kappa * tau_list.^0.5;
+            end
             a = EpsGreedy(a_list, Q_list, epsilon);
             a_history = cat(2, a_history, a);
         end

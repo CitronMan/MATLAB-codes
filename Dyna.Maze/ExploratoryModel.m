@@ -21,6 +21,18 @@ classdef ExploratoryModel < DeterministicModel
             end
         end
         
+        function tau_list = ReadTimeGap(obj, s, a_list)
+            tau_list = zeros(size(a_list));
+            for a = a_list
+                Ind = find((obj.s == s) & (obj.a == a), 1, 'first');
+                if ~isempty(Ind)
+                    tau_list(a_list == a) = obj.time - obj.t(Ind);
+                else
+                    tau_list(a_list == a) = obj.time;
+                end
+            end
+        end
+        
         function [s, a, s_next, r] = RandomExperience(obj, a_list_handle)
             s = obj.s(randi(length(obj.s)));
             a_list = a_list_handle(s);
@@ -32,7 +44,7 @@ classdef ExploratoryModel < DeterministicModel
                 r = obj.r(Ind) + obj.kappa * (obj.time - obj.t(Ind))^0.5;
             else
                 s_next = s;
-                r = obj.kappa * (obj.time - 1)^0.5;
+                r = obj.kappa * obj.time^0.5;
             end
         end
     end
