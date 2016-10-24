@@ -43,6 +43,47 @@ title('Dyna-Q');
 legend('0', '5', '50');
 set(gca, 'FontSize', 15);
 
+display('Simulating Exercise 8.1...');
+if ~exist('nStepQ.mat', 'file')
+    Height = 6; Width = 9;
+    Wall = [3, 3; 3, 4; 3, 5; 6, 2; 8, 4; 8, 5; 8, 6];
+    Start = [1; 4]; Goal = [9; 6]; FinalReward = 1;
+    MazeObj = Maze(Height, Width, Wall, Start, Goal, FinalReward);
+    
+    alpha = 0.1;
+    nStep_list = [1, 5, 50];
+    EpisodeNum = 50;
+    StepNum = zeros(length(nStep_list), SimNum, EpisodeNum);
+    for nStep = nStep_list
+        display(sprintf('Dyna-Q with %d-step bootstrapping...', nStep));
+        tStart = tic;
+        for SimID = 1:SimNum
+            Q = ActionValueSet; ModelObj = DeterministicModel;
+            for EpisodeID = 1:EpisodeNum
+                [~, a_history, ~, Q, ModelObj] = DynaQ(MazeObj, Q, ModelObj, 'nStep', nStep, 'alpha', alpha);
+                StepNum(nStep_list == nStep, SimID, EpisodeID) = length(a_history);
+            end
+            if mod(SimID, 10) == 0
+                tElapse = toc(tStart);
+                display(sprintf('%d/%d processed, elapsed time: %.2fs', SimID, SimNum, tElapse));
+            end
+        end
+    end
+    save('nStepQ.mat', 'StepNum');
+else
+    load('nStepQ.mat');
+    display('Previous result loaded.');
+end
+
+figure('Position', [300 200 500 400]);
+plot(squeeze(mean(StepNum, 2))');
+ylim([0, 800]);
+xlabel('Episode');
+ylabel('Step number');
+title('n-step Q');
+legend('1', '5', '50');
+set(gca, 'FontSize', 15);
+
 display('Simulating Figure 8.5...');
 if ~exist('BlockingMaze.mat', 'file')
     Height = 6; Width = 9;

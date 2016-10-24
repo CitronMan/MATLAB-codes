@@ -12,11 +12,22 @@ classdef ActionValueSet
             obj.Q_default = 0;
         end
         
-        function obj = QLearning(obj, s, a, s_next, a_next_list, r, gamma, alpha)
-            Q_next_list = obj.ReadActionValueList(s_next, a_next_list);
-            delta = r + gamma * max(Q_next_list) - obj.ReadActionValue(s, a);
-            dQ = alpha * delta;
-            obj = obj.UpdateActionValue(s, a, dQ);
+        function obj = QLearning(obj, s_history, a_history, r_history, a_list_handle, gamma, alpha, nStep, epsilon)
+            rho = 1;
+            for i = 2:min([nStep, length(s_history) - 1])
+                Q_list = obj.ReadActionValueList(s_history(i), a_list_handle(s_history(i)));
+                rho = rho * EpsGreedyProb(a_history(i), a_list_handle(s_history(i)), Q_list, 0) ...
+                    / EpsGreedyProb(a_history(i), a_list_handle(s_history(i)), Q_list, epsilon);
+            end
+            G = 0;
+            for i = 1:min([nStep, length(s_history) - 1])
+                G = G + gamma^(i - 1) * r_history(i);
+            end
+            if nStep < length(s_history)
+                G = G + gamma^nStep * max(obj.ReadActionValueList(s_history(nStep + 1), a_list_handle(s_history(nStep + 1))));
+            end
+            dQ = alpha * rho * (G - obj.ReadActionValue(s_history(1), a_history(1)));
+            obj = obj.UpdateActionValue(s_history(1), a_history(1), dQ);
         end
         
         function Val = ReadActionValue(obj, s, a)
