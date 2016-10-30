@@ -141,3 +141,4 @@ end
 xlabel('\alpha');
 ylabel('RMS');
 xlim([0, 1]); ylim([0.15, 0.55]);
+set(gca, 'FontSize', 15);
